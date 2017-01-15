@@ -74,8 +74,9 @@ class ProductController extends Controller
 
         $response = new Response;
         $response->headers->set('Content-Type', 'Application/Json');
-        $this->get('app.product.redis')->destructSpike($product);
-        return $response;
+        $this->get('app.product.redis')->destructSpike($id);
+    
+        return $response->setContent(json_encode(['code' => 1]));;
     }
 
     /**
