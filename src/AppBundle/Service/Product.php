@@ -39,9 +39,8 @@ class Product
      *
      * @param RealProduct $product
      */
-    public function destructSpike(RealProduct $product)
+    public function destructSpike($id)
     {
-        $id             = $product->getId();
         $total_key      = "product_{$id}_count";
         $complete_key   = "complete_{$id}_count";
 
@@ -76,6 +75,7 @@ class Product
         $key = "{$user}_spiking";
 
         $spiking = $this->redis->getSet($key, $user);
+        $this->redis->expire($key, 60);
 
         return $user == $spiking;
     }

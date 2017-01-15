@@ -71,20 +71,10 @@ class ProductController extends Controller
     public function destructSpikeAction(Request $request)
     {
         $id     = $request->get('id');
-        $rep    = $this->getDoctrine()->getManager()->getRepository('AppBundle\Entity\Product');
-
-        $product = $rep->find($id);
 
         $response = new Response;
         $response->headers->set('Content-Type', 'Application/Json');
- 
-        if ($product == null) {
-            $response->setContent(json_encode(['code' => 0]));
-        } else {
-            $this->get('app.product.redis')->destructSpike($product);
-            $response->setContent(json_encode(['code' => 1]));
-        }
-
+        $this->get('app.product.redis')->destructSpike($product);
         return $response;
     }
 
