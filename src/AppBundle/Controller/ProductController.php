@@ -40,7 +40,7 @@ class ProductController extends Controller
     }
 
     /**
-     * 秒杀处理Action，并发处理时会出错
+     * 秒杀处理Action，单用户并发锁
      */
     public function spikeAction(Request $request)
     {
@@ -49,6 +49,16 @@ class ProductController extends Controller
 
         $response = new Response();
         $response->headers->set('Content-Type', 'Application/Json');
+
+        /**
+         * 并发锁,此处解决的时同一时刻并发的问题，但没有解决多次重复提交秒杀
+         */
+        
+        $product_redis = $this->get('app.product.redis');
+        if ($product_redis->isUserSpiking($user)) {
+            $response->setContent(json_encode(['code' => -2, 'user' => $user, 'message' => '请勿重复秒杀']));
+            return $response;
+        }
 
         $check  = $this->isSpikeAble($id);
 
@@ -84,6 +94,11 @@ class ProductController extends Controller
                 'id'    => $product->getId(),
                 'title' => $product->getTitle()]
             ]));
+
+        /**
+         * 删除锁
+         */
+        $product_redis->setUserSpiked($user);
 
         return $response;
     }
