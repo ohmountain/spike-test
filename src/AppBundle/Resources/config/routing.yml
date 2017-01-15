@@ -1,0 +1,19 @@
+app_homepage:
+    path:       /
+    defaults:   { _controller: AppBundle:Default:index }
+
+app_create_product:
+    path:       /create
+    defaults:   { _controller: AppBundle:Product:create }
+    methods:    [POST]
+
+app_product_spike:
+    path:       /spike
+    defaults:   { _controller: AppBundle:Product:spike }
+    methods:    [POST]
+
+app_product_spikeable:
+    path:       /check
+    defaults:   { _controller: AppBundle:Product:check }
+    methods:    [GET]
+
