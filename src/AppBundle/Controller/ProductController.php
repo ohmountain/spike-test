@@ -39,6 +39,55 @@ class ProductController extends Controller
         return $response;
     }
 
+
+    /**
+     * 初始化秒杀
+     * 把商品个数存入redis
+     */
+    public function initSpikeAction(Request $request)
+    {
+        $id     = $request->get('id');
+        $rep    = $this->getDoctrine()->getManager()->getRepository('AppBundle\Entity\Product');
+
+        $product = $rep->find($id);
+
+        $response = new Response;
+        $response->headers->set('Content-Type', 'Application/Json');
+ 
+        if ($product == null) {
+            $response->setContent(json_encode(['code' => 0]));
+        } else {
+            $this->get('app.product.redis')->initSpike($product);
+            $response->setContent(json_encode(['code' => 1]));
+        }
+
+        return $response;
+    }
+
+    /**
+     * 结束时触发
+     * 从redis中删除秒杀商品数量
+     */
+    public function destructSpikeAction(Request $request)
+    {
+        $id     = $request->get('id');
+        $rep    = $this->getDoctrine()->getManager()->getRepository('AppBundle\Entity\Product');
+
+        $product = $rep->find($id);
+
+        $response = new Response;
+        $response->headers->set('Content-Type', 'Application/Json');
+ 
+        if ($product == null) {
+            $response->setContent(json_encode(['code' => 0]));
+        } else {
+            $this->get('app.product.redis')->destructSpike($product);
+            $response->setContent(json_encode(['code' => 1]));
+        }
+
+        return $response;
+    }
+
     /**
      * 秒杀处理Action，单用户并发锁
      */
@@ -50,13 +99,22 @@ class ProductController extends Controller
         $response = new Response();
         $response->headers->set('Content-Type', 'Application/Json');
 
+        $product_redis = $this->get('app.product.redis');
+
         /**
          * 并发锁,此处解决的时同一时刻并发的问题，但没有解决多次重复提交秒杀
          */
         
-        $product_redis = $this->get('app.product.redis');
         if ($product_redis->isUserSpiking($user)) {
             $response->setContent(json_encode(['code' => -2, 'user' => $user, 'message' => '请勿重复秒杀']));
+            return $response;
+        }
+
+        /**
+         * 并发锁，此处解决秒杀成功次数大于商品数量的问题
+         */
+        if (!$product_redis->isSpikeAble($id)) {
+            $response->setContent(json_encode(['code' => 0, 'user' => $user, 'message' => '秒杀已结束']));
             return $response;
         }
 
@@ -130,6 +188,29 @@ class ProductController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * 产生供gatling使用的json
+     */
+    public function feedersAction(Request $request)
+    {
+        $count = $request->get('count');
+
+        $count = intval($count) > 0 ? intval($count) : 1;
+
+        $response = new Response;
+
+        $feeders = [];
+
+        for ($i=1; $i<=$count; $i++) {
+            array_push($feeders, ['id' => $i]);
+        };
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setContent(json_encode($feeders));
+
+        return $response;
     }
 }
 

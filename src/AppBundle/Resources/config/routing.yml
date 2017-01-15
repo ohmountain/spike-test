@@ -17,3 +17,15 @@ app_product_spikeable:
     defaults:   { _controller: AppBundle:Product:check }
     methods:    [GET]
 
+app_product_feeders:
+    path:       /feeders
+    defaults:   { _controller: AppBundle:Product:feeders }
+
+app_product_spike_init:
+    path:       /init
+    defaults:   { _controller: AppBundle:Product:initSpike }
+        
+app_product_spike_destruct:
+    path:       /destruct
+    defaults:   { _controller: AppBundle:Product:destructSpike }
+ 
